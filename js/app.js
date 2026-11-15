@@ -69,7 +69,7 @@
           const anyActive = s.children.some((c) => c.id === current);
           h += `<div class="nav-group ${anyActive ? "open" : ""}"><a class="nav-item parent" href="#/s/${s.children[0].id}"><span class="num">${s.num}</span>${md(s.title)}</a>`;
           s.children.forEach((c) => {
-            h += `<a class="nav-item child ${c.id === current ? "active" : ""}" href="#/s/${c.id}"><span class="num">${c.num}</span>${md(c.title)}${sectionDone(c.id) ? '<span class="tick">✓</span>' : ""}</a>`;
+            h += `<a class="nav-item child ${c.id === current ? "active" : ""}" href="#/s/${c.id}"><span class="num">${s.num}.${c.num}</span>${md(c.title)}${sectionDone(c.id) ? '<span class="tick">✓</span>' : ""}</a>`;
           });
           h += `</div>`;
         } else {
@@ -120,7 +120,7 @@
         const list = s.children ? s.children : [s];
         list.forEach((c) => {
           const label = s.children ? `${s.title} — ${c.title}` : c.title;
-          h += `<a class="sec-card ${sectionDone(c.id) ? "done" : ""}" href="#/s/${c.id}"><span class="num">${s.children ? s.num + " " + c.num : c.num}</span><span class="t">${md(label)}</span>${sectionDone(c.id) ? '<span class="tick">✓</span>' : ""}</a>`;
+          h += `<a class="sec-card ${sectionDone(c.id) ? "done" : ""}" href="#/s/${c.id}"><span class="num">${s.children ? s.num + "." + c.num : c.num}</span><span class="t">${md(label)}</span>${sectionDone(c.id) ? '<span class="tick">✓</span>' : ""}</a>`;
         });
       });
       h += `</div></section>`;
@@ -148,7 +148,7 @@
     const hasAb = les.abhyasa && les.abhyasa.length;
     if (!hasAb) tab = "patha";
     const crumbs = info.extra ? "" : `<div class="crumbs">${md(info.part.title)}${info.parent ? " › " + md(info.parent.title) : ""}</div>`;
-    let h = `${crumbs}<h1 class="sec-title">${info.num && !info.extra ? `<span class="num">${info.parent ? info.parent.num + " " + info.num : info.num}</span>` : ""}${md(les.title || info.title)}</h1>`;
+    let h = `${crumbs}<h1 class="sec-title">${info.num && !info.extra ? `<span class="num">${info.parent ? info.parent.num + "." + info.num : info.num}</span>` : ""}${md(les.title || info.title)}</h1>`;
     if (hasAb) {
       h += `<div class="tabs"><a class="tab ${tab !== "abhyasa" ? "on" : ""}" href="#/s/${id}">पाठः</a><a class="tab ${tab === "abhyasa" ? "on" : ""}" href="#/s/${id}/abhyasa">अभ्यासशाला</a></div>`;
     }
