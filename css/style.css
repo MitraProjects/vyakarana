@@ -39,6 +39,7 @@ a { color: var(--accent); }
 .nav-item.active, .nav-home.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .nav-item .num { min-width: 22px; color: var(--muted); font-size: 14px; text-align: center; }
 .nav-item.child { padding-left: 30px; font-size: 15px; }
+.nav-item.child .num { min-width: 30px; }
 .nav-item .tick { margin-left: auto; color: var(--yes); font-weight: 700; }
 
 /* home */
