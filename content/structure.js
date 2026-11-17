@@ -1,5 +1,6 @@
 // ============================================================
-//  STRUCTURE OF THE SITE  —  order of parts and sections
+//  STRUCTURE OF THE SITE
+//  Groups can be nested: { num, title, children: [ ... ] }  —  order of parts and sections
 //  Each "id" must match a lesson file entry:  L("id", {...})
 // ============================================================
 window.LESSONS = {};
@@ -39,6 +40,21 @@ window.SITE = {
         { id: "m1-curadi", num: "११", title: "चुरादिगणः" },
         { id: "m1-paribhasha", num: "१२", title: "पारिभाषिकपदानि" },
         { id: "m1-mahabhyasa", num: "१३", title: "महाभ्यासः" },
+      ],
+    },
+    {
+      title: "पाठः २ — अस्माकं मूल-यन्त्राणि",
+      sub: "",
+      sections: [
+        { id: "m2-intro", num: "०", title: "परिचयः" },
+        { num: "१", title: "माहेश्वराणि सूत्राणि", children: [
+          { num: "क", title: "पूर्वज्ञानम् — वर्णाः", children: [
+            { id: "m2-1k1", num: "१", title: "अक्षराणि" },
+            { id: "m2-1k2", num: "२", title: "स्वराणां भेदाः" },
+            { id: "m2-1k3", num: "३", title: "व्यञ्जनानि" },
+            { id: "m2-1k4", num: "४", title: "उच्चारणस्थानानि" },
+          ]},
+        ]},
       ],
     },
   ],

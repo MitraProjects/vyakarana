@@ -40,16 +40,21 @@
     return h;
   }
 
-  // ---------------- flatten structure ----------------
+  // ---------------- flatten structure (any depth) ----------------
+  // A node is either a lesson { id, num, title } or a group { num, title, children: [...] }.
   const ORDER = [];
   const INFO = {};
-  SITE.parts.forEach((p, pi) => p.sections.forEach((s) => {
-    if (s.children) {
-      INFO[s.id] = { ...s, part: p, pi, isParent: true };
-      s.children.forEach((c) => { ORDER.push(c.id); INFO[c.id] = { ...c, part: p, pi, parent: s }; });
-    } else { ORDER.push(s.id); INFO[s.id] = { ...s, part: p, pi }; }
-  }));
-  (SITE.extra || []).forEach((e) => { INFO[e.id] = { ...e, extra: true }; });
+  function firstLeaf(n) { return n.children ? firstLeaf(n.children[0]) : n; }
+  function walk(nodes, part, pi, path) {
+    nodes.forEach((n) => {
+      const p2 = path.concat([n]);
+      if (n.children) walk(n.children, part, pi, p2);
+      else { ORDER.push(n.id); INFO[n.id] = { ...n, part, pi, path: p2 }; }
+    });
+  }
+  SITE.parts.forEach((p, pi) => walk(p.sections, p, pi, []));
+  (SITE.extra || []).forEach((e) => { INFO[e.id] = { ...e, extra: true, path: [e] }; });
+  const label = (path) => path.map((n) => n.num).filter((x) => x && x !== "★").join(".");
 
   function sectionDone(id) {
     if (store.done[id]) return true;
@@ -57,31 +62,54 @@
     if (!les || !les.abhyasa) return false;
     return les.abhyasa.some((set, i) => store.best[id + ":" + i]);
   }
+  function containsId(n, id) { return n.children ? n.children.some((c) => containsId(c, id)) : n.id === id; }
+
+  // open / closed state of expandable topics (remembered in this browser)
+  store.open = store.open || {};
+  function isOpen(key, hasCurrent, dflt) {
+    if (hasCurrent) return true;
+    return key in store.open ? store.open[key] : dflt;
+  }
+
+  // remember only what the learner opens / closes by hand
+  function rememberToggles(root) {
+    root.querySelectorAll("details[data-key] > summary").forEach((sm) => sm.addEventListener("click", () => {
+      const d = sm.parentElement; store.open[d.dataset.key] = !d.open; save(store);
+    }));
+  }
 
   // ---------------- sidebar ----------------
+  function navNodes(nodes, current, path, depth) {
+    let h = "";
+    nodes.forEach((n) => {
+      const p2 = path.concat([n]);
+      const lab = label(p2);
+      if (n.children) {
+        const key = "g:" + p2.map((x) => x.num + x.title).join("/");
+        const open = isOpen(key, containsId(n, current), false);
+        h += `<details class="nav-group" data-key="${esc(key)}" ${open ? "open" : ""}><summary class="nav-item parent" style="padding-left:${12 + depth * 16}px"><span class="num">${lab}</span>${md(n.title)}</summary>`;
+        h += navNodes(n.children, current, p2, depth + 1);
+        h += `</details>`;
+      } else {
+        h += `<a class="nav-item ${n.id === current ? "active" : ""}" style="padding-left:${12 + depth * 16}px" href="#/s/${n.id}"><span class="num">${lab}</span>${md(n.title)}${sectionDone(n.id) ? '<span class="tick">✓</span>' : ""}</a>`;
+      }
+    });
+    return h;
+  }
   function renderSidebar(current) {
     current = current || (location.hash.split("/")[2] || "");
     let h = `<a class="nav-home ${current === "" ? "active" : ""}" href="#/">मुखपृष्ठम्</a>`;
-    SITE.parts.forEach((p) => {
-      h += `<div class="nav-part">${md(p.title)}</div>`;
-      p.sections.forEach((s) => {
-        if (s.children) {
-          const anyActive = s.children.some((c) => c.id === current);
-          h += `<div class="nav-group ${anyActive ? "open" : ""}"><a class="nav-item parent" href="#/s/${s.children[0].id}"><span class="num">${s.num}</span>${md(s.title)}</a>`;
-          s.children.forEach((c) => {
-            h += `<a class="nav-item child ${c.id === current ? "active" : ""}" href="#/s/${c.id}"><span class="num">${s.num}.${c.num}</span>${md(c.title)}${sectionDone(c.id) ? '<span class="tick">✓</span>' : ""}</a>`;
-          });
-          h += `</div>`;
-        } else {
-          h += `<a class="nav-item ${s.id === current ? "active" : ""}" href="#/s/${s.id}"><span class="num">${s.num}</span>${md(s.title)}${sectionDone(s.id) ? '<span class="tick">✓</span>' : ""}</a>`;
-        }
-      });
+    SITE.parts.forEach((p, pi) => {
+      const key = "p:" + pi;
+      const open = isOpen(key, p.sections.some((n) => containsId(n, current)), false);
+      h += `<details class="nav-partbox" data-key="${key}" ${open ? "open" : ""}><summary class="nav-part">${md(p.title)}</summary>${navNodes(p.sections, current, [], 0)}</details>`;
     });
-    h += `<div class="nav-part">अन्यत्</div>`;
+    h += `<div class="nav-part plain">अन्यत्</div>`;
     (SITE.extra || []).forEach((e) => {
       h += `<a class="nav-item ${e.id === current ? "active" : ""}" href="#/s/${e.id}">${md(e.title)}</a>`;
     });
     sidebar.innerHTML = h;
+    rememberToggles(sidebar);
   }
 
   // ---------------- lesson blocks ----------------
@@ -111,25 +139,32 @@
   function home() {
     let h = `<section class="hero">
       <h1>व्याकरणाभ्यासः</h1>
-      <p class="lead">स्वागतम् ! अत्र पाणिनीय-व्याकरणं सोपानशः पठामः , अभ्यासशालायां च अभ्यासं कुर्मः।</p>
+      <p class="lead">स्वागतम् ! अत्र पाणिनीय-व्याकरणं क्रमशः पठामः , अभ्यासशालायां च अभ्यासं कुर्मः।</p>
       <p class="muted">प्रत्येकस्मिन् विभागे द्वौ पटलौ स्तः — <b>पाठः</b> ( पठनसामग्री ) , <b>अभ्यासशाला</b> ( अभ्यासः )। क्रमेण पठतु ; किन्तु कमपि विभागं यदा कदा अपि उद्घाटयितुं शक्नोति।</p>
     </section>`;
-    SITE.parts.forEach((p) => {
-      h += `<section class="part-card"><h2>${md(p.title)}</h2>${p.sub ? `<p class="muted">${md(p.sub)}</p>` : ""}<div class="sec-grid">`;
-      p.sections.forEach((s) => {
-        const list = s.children ? s.children : [s];
-        list.forEach((c) => {
-          const label = s.children ? `${s.title} — ${c.title}` : c.title;
-          h += `<a class="sec-card ${sectionDone(c.id) ? "done" : ""}" href="#/s/${c.id}"><span class="num">${s.children ? s.num + "." + c.num : c.num}</span><span class="t">${md(label)}</span>${sectionDone(c.id) ? '<span class="tick">✓</span>' : ""}</a>`;
-        });
+    function homeNodes(nodes, path) {
+      let out = "";
+      nodes.forEach((n) => {
+        const p2 = path.concat([n]);
+        if (n.children) {
+          out += `</div><div class="grp-title" style="margin-left:${(p2.length - 1) * 14}px"><span class="num">${label(p2)}</span>${md(n.title)}</div><div class="sec-grid">` + homeNodes(n.children, p2) + `</div><div class="sec-grid">`;
+        } else {
+          out += `<a class="sec-card ${sectionDone(n.id) ? "done" : ""}" href="#/s/${n.id}"><span class="num">${label(p2)}</span><span class="t">${md(n.title)}</span>${sectionDone(n.id) ? '<span class="tick">✓</span>' : ""}</a>`;
+        }
       });
-      h += `</div></section>`;
+      return out;
+    }
+    SITE.parts.forEach((p, pi) => {
+      const key = "h:" + pi;
+      const open = isOpen(key, false, true);
+      h += `<details class="part-card" data-key="${key}" ${open ? "open" : ""}><summary><h2>${md(p.title)}</h2>${p.sub ? `<span class="muted">${md(p.sub)}</span>` : ""}</summary><div class="sec-grid">${homeNodes(p.sections, [])}</div></details>`;
     });
     h += `<section class="part-card small"><a href="#/s/glossary">पारिभाषिक-शब्दकोशः</a> · <a href="#/s/credits">कृतज्ञता</a>
       <div class="reset-all"><button class="btn ghost" id="resetAll">सर्वं पुनः आरभताम्</button><span class="muted">( सर्वे ✓ अङ्काः च अपनीयन्ते )</span></div></section>`;
     main.innerHTML = h;
+    rememberToggles(main);
     $("#resetAll").onclick = () => {
-      if (confirmBox()) { store = { best: {}, done: {} }; save(store); renderSidebar(""); home(); }
+      if (confirmBox()) { store = { best: {}, done: {}, open: {}, seenWords: {} }; save(store); renderSidebar(""); home(); }
     };
   }
   function confirmBox() {
@@ -141,19 +176,34 @@
     return false;
   }
 
+  function wordsTable(words) {
+    return `<div class="tbl-wrap"><table class="words"><thead><tr><th>शब्दः</th><th>अर्थः</th><th>English</th></tr></thead><tbody>${
+      words.map((w) => `<tr><td><b>${md(w[0])}</b></td><td>${md(w[1])}</td><td class="en-col">${md(w[2] || "")}</td></tr>`).join("")}</tbody></table></div>`;
+  }
+
+  // tab: "shabda" | "patha" | "abhyasa" | null (null = default)
   function sectionPage(id, tab) {
     const info = INFO[id];
     const les = LESSONS[id];
     if (!info || !les) { main.innerHTML = `<p>विभागः न प्राप्तः।</p>`; return; }
-    const hasAb = les.abhyasa && les.abhyasa.length;
-    if (!hasAb) tab = "patha";
-    const crumbs = info.extra ? "" : `<div class="crumbs">${md(info.part.title)}${info.parent ? " › " + md(info.parent.title) : ""}</div>`;
-    let h = `${crumbs}<h1 class="sec-title">${info.num && !info.extra ? `<span class="num">${info.parent ? info.parent.num + "." + info.num : info.num}</span>` : ""}${md(les.title || info.title)}</h1>`;
-    if (hasAb) {
-      h += `<div class="tabs"><a class="tab ${tab !== "abhyasa" ? "on" : ""}" href="#/s/${id}">पाठः</a><a class="tab ${tab === "abhyasa" ? "on" : ""}" href="#/s/${id}/abhyasa">अभ्यासशाला</a></div>`;
+    const hasAb = !!(les.abhyasa && les.abhyasa.length);
+    const hasW = !!(les.words && les.words.length);
+    store.seenWords = store.seenWords || {};
+    if (!tab) tab = hasW && !store.seenWords[id] ? "shabda" : "patha";   // first visit opens the शब्दकोशः
+    if (tab === "shabda" && !hasW) tab = "patha";
+    if (tab === "abhyasa" && !hasAb) tab = "patha";
+    if (tab === "shabda") { store.seenWords[id] = true; save(store); }
+    const crumbs = info.extra ? "" : `<div class="crumbs">${[info.part.title].concat(info.path.slice(0, -1).map((n) => n.title)).map(md).join(" › ")}</div>`;
+    const lab = info.extra ? "" : label(info.path);
+    let h = `${crumbs}<h1 class="sec-title">${lab ? `<span class="num">${lab}</span>` : ""}${md(les.title || info.title)}</h1>`;
+    if (hasAb || hasW) {
+      h += `<div class="tabs">` +
+        (hasW ? `<a class="tab ${tab === "shabda" ? "on" : ""}" href="#/s/${id}/shabda">शब्दकोशः</a>` : "") +
+        `<a class="tab ${tab === "patha" ? "on" : ""}" href="#/s/${id}/patha">पाठः</a>` +
+        (hasAb ? `<a class="tab ${tab === "abhyasa" ? "on" : ""}" href="#/s/${id}/abhyasa">अभ्यासशाला</a>` : "") +
+        `</div>`;
     }
     h += `<div id="tabBody"></div>`;
-    // prev / next
     const i = ORDER.indexOf(id);
     if (i >= 0) {
       const prev = ORDER[i - 1], next = ORDER[i + 1];
@@ -162,12 +212,40 @@
     main.innerHTML = h;
     const body = $("#tabBody");
     if (tab === "abhyasa") abhyasaList(id, body);
-    else {
-      body.innerHTML = `<article class="lesson">${renderBlocks(les.blocks)}</article>` +
+    else if (tab === "shabda") {
+      body.innerHTML = `<p class="muted">अस्मिन् विभागे एते पारिभाषिक-शब्दाः आगच्छन्ति। पाठात् पूर्वम् एकवारं पठतु ; पाठानन्तरं पुनः पश्यतु।</p>${wordsTable(les.words)}
+        <div class="to-ab"><a class="btn" href="#/s/${id}/patha">पाठं पठतु ›</a></div>`;
+    } else {
+      body.innerHTML = (hasW ? `<p class="to-words"><a href="#/s/${id}/shabda">शब्दकोशं पश्यतु</a></p>` : "") +
+        `<article class="lesson">${renderBlocks(les.blocks)}</article>` +
         (hasAb ? `<div class="to-ab"><a class="btn" href="#/s/${id}/abhyasa">अभ्यासशालां गच्छतु ›</a></div>` : "");
       if (!hasAb && !info.extra) markDone(id);
-      if (les.afterRender) les.afterRender(body, { md, renderBlocks });
+      if (les.afterRender) les.afterRender(body, { md, renderBlocks, buildGlossary });
     }
+  }
+
+  // main शब्दकोशः page: every section's words, grouped by पाठः, searchable
+  function buildGlossary(body) {
+    const groups = [];
+    SITE.parts.forEach((p) => {
+      const rows = [];
+      ORDER.filter((id) => INFO[id].part === p).forEach((id) => {
+        (LESSONS[id] && LESSONS[id].words || []).forEach((w) => rows.push({ w, id }));
+      });
+      if (rows.length) groups.push({ title: p.title, rows });
+    });
+    const gbody = body.querySelector("#gbody");
+    function draw(f) {
+      f = (f || "").trim().toLowerCase();
+      gbody.innerHTML = groups.map((g) => {
+        const rows = g.rows.filter((r) => !f || r.w.join(" ").toLowerCase().includes(f));
+        if (!rows.length) return "";
+        return `<h2>${md(g.title)}</h2><div class="tbl-wrap"><table class="words"><thead><tr><th>शब्दः</th><th>अर्थः</th><th>English</th><th>विभागः</th></tr></thead><tbody>${
+          rows.map((r) => `<tr><td><b>${md(r.w[0])}</b></td><td>${md(r.w[1])}</td><td class="en-col">${md(r.w[2] || "")}</td><td><a href="#/s/${r.id}/patha">${label(INFO[r.id].path)} ${md(INFO[r.id].title)}</a></td></tr>`).join("")}</tbody></table></div>`;
+      }).join("") || `<p class="muted">न प्राप्तम्।</p>`;
+    }
+    draw("");
+    body.querySelector("#gsearch").oninput = (e) => draw(e.target.value);
   }
 
   // ---------------- abhyasa ----------------
@@ -230,7 +308,7 @@
       body.innerHTML = `<div class="quiz result">
         <div class="score">${dn(score)} / ${dn(qs.length)}</div>
         <p>${pct === 1 ? "अत्युत्तमम् ! सर्वे उत्तराः सम्यक्।" : pct >= 0.7 ? "उत्तमम् ! पुनः प्रयत्नेन पूर्णाङ्कान् प्राप्नोतु।" : "पाठं पुनः पठित्वा पुनः प्रयतताम्।"}</p>
-        <div class="row"><button class="btn" id="again">पुनः आरभताम्</button><button class="btn ghost" id="back">अभ्यासशालां प्रति</button><a class="btn ghost" href="#/s/${id}">पाठं पठतु</a></div>
+        <div class="row"><button class="btn" id="again">पुनः आरभताम्</button><button class="btn ghost" id="back">अभ्यासशालां प्रति</button><a class="btn ghost" href="#/s/${id}/patha">पाठं पठतु</a></div>
       </div>`;
       $("#again").onclick = () => runSet(id, si, body);
       $("#back").onclick = () => abhyasaList(id, body);
@@ -347,7 +425,7 @@
     document.body.classList.remove("nav-open");
     if (parts[0] === "s" && parts[1]) {
       renderSidebar(parts[1]);
-      sectionPage(parts[1], parts[2] === "abhyasa" ? "abhyasa" : "patha");
+      sectionPage(parts[1], ["abhyasa", "patha", "shabda"].includes(parts[2]) ? parts[2] : null);
     } else { renderSidebar(""); home(); }
     window.scrollTo(0, 0);
   }

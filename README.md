@@ -20,7 +20,7 @@ No installation, no server code. It runs on GitHub Pages as plain files.
 | `content/structure.js` | Order of parts and sections (the sidebar) |
 | `content/f1.js` … `f4.js` | पूर्वपीठिका lessons + practice |
 | `content/m1-*.js` | पाठः १ lessons + practice |
-| `content/glossary.js` | पारिभाषिक-शब्दकोशः |
+| `content/glossary.js` | पारिभाषिक-शब्दकोशः page — built automatically from each section's `words` list |
 | `content/credits.js` | कृतज्ञता page — सद्गुरुभ्यो नमः ; add maṅgalācaraṇas where marked |
 | `data/abhyasa.js` | The 94 dhātus for the "गणं जानीहि" game |
 | `css/style.css`, `js/app.js` | Design and engine — normally no need to touch |
@@ -33,6 +33,8 @@ Markup inside text:
 - `**शब्दः**` → bold
 - `{अ}` → red highlight
 - ✓ and ✗ turn green / red automatically
+
+Section word lists: each lesson has `words: [["शब्दः", "अर्थः", "English"], ...]`. They show in the section's शब्दकोशः tab (opened first on a learner's first visit) and in the main शब्दकोशः page.
 
 Practice items:
 - `mcq` — the **first option is the correct answer** (options are shuffled on screen)

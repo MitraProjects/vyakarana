@@ -159,3 +159,26 @@ tbody tr:nth-child(even) td { background: #fdfaf4; }
 }
 
 [hidden] { display: none !important; }
+
+/* expandable topics */
+details > summary { list-style: none; cursor: pointer; }
+details > summary::-webkit-details-marker { display: none; }
+.nav-partbox > summary.nav-part, .nav-group > summary { display: flex; align-items: center; gap: 8px; }
+.nav-partbox > summary.nav-part::before, .nav-group > summary::before, .part-card > summary::before {
+  content: "▸"; display: inline-block; width: 12px; color: var(--muted); transition: transform .15s; }
+.nav-partbox[open] > summary.nav-part::before, .nav-group[open] > summary::before, .part-card[open] > summary::before { transform: rotate(90deg); }
+.nav-partbox > summary.nav-part { margin: 14px 4px 4px; padding: 4px 8px; border-radius: 8px; color: var(--ink); font-size: 15px; }
+.nav-partbox > summary.nav-part:hover { background: #efe5d3; }
+.nav-part.plain { margin: 18px 12px 6px; }
+.nav-group > summary.nav-item { font-weight: 600; }
+.nav-group > summary.nav-item::before { margin-left: -4px; }
+.part-card > summary { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.part-card > summary h2 { display: inline; }
+.grp-title { margin: 16px 0 2px; font-weight: 700; color: var(--accent); display: flex; gap: 10px; align-items: center; }
+.grp-title .num { font-size: 13px; background: var(--accent-soft); border-radius: 999px; padding: 0 10px; }
+.sec-card .num { min-width: 34px; width: auto; padding: 0 8px; border-radius: 999px; }
+
+/* शब्दकोशः */
+.to-words { margin: 0 0 6px; font-size: 15px; }
+table.words td:first-child { white-space: nowrap; }
+table.words .en-col { color: var(--yes); font-style: italic; }
