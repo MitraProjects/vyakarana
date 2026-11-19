@@ -34,6 +34,7 @@
   function md(s) {
     if (s == null) return "";
     let h = esc(s);
+    h = h.replace(/\[\[g\|(.+?)\]\]/g, '<b class="c-green">$1</b>').replace(/\[\[bl\|(.+?)\]\]/g, '<b class="c-blue">$1</b>');
     h = h.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
     h = h.replace(/\{(.+?)\}/g, '<span class="hl">$1</span>');
     h = h.replace(/✓/g, '<span class="yes">✓</span>').replace(/✗/g, '<span class="no">✗</span>');
@@ -56,11 +57,27 @@
   (SITE.extra || []).forEach((e) => { INFO[e.id] = { ...e, extra: true, path: [e] }; });
   const label = (path) => path.map((n) => n.num).filter((x) => x && x !== "★").join(".");
 
-  function sectionDone(id) {
-    if (store.done[id]) return true;
+  // ---- progress: ✓ = पाठः marked read + every required set ≥ 70% ; ◐ = started
+  const PASS = 0.7;
+  const MARKS = false;   // completion marks — turned off until decided
+  store.read = store.read || {};
+  function setPassed(id, i) { const b = store.best[id + ":" + i]; return !!b && b[0] / b[1] >= PASS; }
+  function status(id) {
     const les = LESSONS[id];
-    if (!les || !les.abhyasa) return false;
-    return les.abhyasa.some((set, i) => store.best[id + ":" + i]);
+    if (!les) return "";
+    const sets = les.abhyasa || [];
+    const req = sets.map((s, i) => i).filter((i) => !sets[i].optional);
+    const read = !!store.read[id];
+    const abOK = req.every((i) => setPassed(id, i));
+    const started = read || sets.some((s, i) => store.best[id + ":" + i]);
+    if (read && abOK) return "done";
+    return started ? "part" : "";
+  }
+  function sectionDone(id) { return MARKS && status(id) === "done"; }
+  function mark(id) {
+    if (!MARKS) return "";
+    const st = status(id);
+    return st === "done" ? '<span class="tick">✓</span>' : st === "part" ? '<span class="tick part" title="आरब्धम्">◐</span>' : "";
   }
   function containsId(n, id) { return n.children ? n.children.some((c) => containsId(c, id)) : n.id === id; }
 
@@ -91,7 +108,7 @@
         h += navNodes(n.children, current, p2, depth + 1);
         h += `</details>`;
       } else {
-        h += `<a class="nav-item ${n.id === current ? "active" : ""}" style="padding-left:${12 + depth * 16}px" href="#/s/${n.id}"><span class="num">${lab}</span>${md(n.title)}${sectionDone(n.id) ? '<span class="tick">✓</span>' : ""}</a>`;
+        h += `<a class="nav-item ${n.id === current ? "active" : ""}" style="padding-left:${12 + depth * 16}px" href="#/s/${n.id}"><span class="num">${lab}</span>${md(n.title)}${mark(n.id)}</a>`;
       }
     });
     return h;
@@ -149,7 +166,7 @@
         if (n.children) {
           out += `</div><div class="grp-title" style="margin-left:${(p2.length - 1) * 14}px"><span class="num">${label(p2)}</span>${md(n.title)}</div><div class="sec-grid">` + homeNodes(n.children, p2) + `</div><div class="sec-grid">`;
         } else {
-          out += `<a class="sec-card ${sectionDone(n.id) ? "done" : ""}" href="#/s/${n.id}"><span class="num">${label(p2)}</span><span class="t">${md(n.title)}</span>${sectionDone(n.id) ? '<span class="tick">✓</span>' : ""}</a>`;
+          out += `<a class="sec-card ${sectionDone(n.id) ? "done" : ""}" href="#/s/${n.id}"><span class="num">${label(p2)}</span><span class="t">${md(n.title)}</span>${mark(n.id)}</a>`;
         }
       });
       return out;
@@ -164,7 +181,7 @@
     main.innerHTML = h;
     rememberToggles(main);
     $("#resetAll").onclick = () => {
-      if (confirmBox()) { store = { best: {}, done: {}, open: {}, seenWords: {} }; save(store); renderSidebar(""); home(); }
+      if (confirmBox()) { store = { best: {}, done: {}, open: {}, seenWords: {}, read: {} }; save(store); renderSidebar(""); home(); }
     };
   }
   function confirmBox() {
@@ -218,8 +235,10 @@
     } else {
       body.innerHTML = (hasW ? `<p class="to-words"><a href="#/s/${id}/shabda">शब्दकोशं पश्यतु</a></p>` : "") +
         `<article class="lesson">${renderBlocks(les.blocks)}</article>` +
+        (info.extra || !MARKS ? "" : `<div class="read-box"><button class="btn ${store.read[id] ? "read-on" : "ghost"}" id="readBtn">${store.read[id] ? "✓ पठितम्" : "पठितम् इति अङ्कयतु"}</button><span class="muted">${store.read[id] ? "पुनः नुदतु चेत् अङ्कनम् अपगच्छति।" : "पाठं सम्पूर्णं पठित्वा नुदतु।"}</span></div>`) +
         (hasAb ? `<div class="to-ab"><a class="btn" href="#/s/${id}/abhyasa">अभ्यासशालां गच्छतु ›</a></div>` : "");
-      if (!hasAb && !info.extra) markDone(id);
+      const rb = $("#readBtn");
+      if (rb) rb.onclick = () => { store.read[id] = !store.read[id]; save(store); renderSidebar(id); sectionPage(id, "patha"); };
       if (les.afterRender) les.afterRender(body, { md, renderBlocks, buildGlossary });
     }
   }
@@ -251,12 +270,12 @@
   // ---------------- abhyasa ----------------
   function abhyasaList(id, body) {
     const les = LESSONS[id];
-    let h = `<div class="ab-intro muted">अत्र अभ्यासाः सन्ति। प्रत्येकं अभ्यासं पुनः पुनः कर्तुं शक्नोति — प्रश्नाः प्रतिवारं नूतनक्रमेण आगच्छन्ति।</div><div class="ab-grid">`;
+    let h = `<div class="ab-intro muted">अत्र अभ्यासाः सन्ति। प्रत्येकं अभ्यासं पुनः पुनः कर्तुं शक्नोति — प्रश्नाः प्रतिवारं नूतनक्रमेण आगच्छन्ति। प्रत्येकस्मिन् अभ्यासे ७०% अङ्काः प्राप्यन्ते चेत् ✓ भवति।</div><div class="ab-grid">`;
     les.abhyasa.forEach((set, i) => {
       const best = store.best[id + ":" + i];
       const n = set.gana ? (set.gana.count || 10) : set.items.length;
       h += `<div class="ab-card"><div class="ab-title">${md(set.title)}</div>
-        <div class="muted">${dn(n)} प्रश्नाः${best ? ` · श्रेष्ठाङ्काः ${dn(best[0])} / ${dn(best[1])}` : ""}</div>
+        <div class="muted">${dn(n)} प्रश्नाः${MARKS && set.optional ? " · ऐच्छिकम्" : ""}${best ? ` · श्रेष्ठाङ्काः ${dn(best[0])} / ${dn(best[1])}` : ""}${MARKS && setPassed(id, i) ? ' <span class="yes">✓</span>' : ""}</div>
         <button class="btn" data-set="${i}">${best ? "पुनः आरभताम्" : "आरभताम्"}</button></div>`;
     });
     h += `</div>`;
@@ -307,7 +326,7 @@
       const pct = score / qs.length;
       body.innerHTML = `<div class="quiz result">
         <div class="score">${dn(score)} / ${dn(qs.length)}</div>
-        <p>${pct === 1 ? "अत्युत्तमम् ! सर्वे उत्तराः सम्यक्।" : pct >= 0.7 ? "उत्तमम् ! पुनः प्रयत्नेन पूर्णाङ्कान् प्राप्नोतु।" : "पाठं पुनः पठित्वा पुनः प्रयतताम्।"}</p>
+        <p>${pct === 1 ? "अत्युत्तमम् ! सर्वे उत्तराः सम्यक्। ✓" : !MARKS ? (pct >= 0.5 ? "उत्तमम् ! पुनः प्रयत्नेन पूर्णाङ्कान् प्राप्नोतु।" : "पाठं पुनः पठित्वा पुनः प्रयतताम्।") : pct >= PASS ? "उत्तमम् ! ✓ — पुनः प्रयत्नेन पूर्णाङ्कान् प्राप्नोतु।" : "७०% अङ्काः आवश्यकाः। पाठं पुनः पठित्वा पुनः प्रयतताम्।"}</p>
         <div class="row"><button class="btn" id="again">पुनः आरभताम्</button><button class="btn ghost" id="back">अभ्यासशालां प्रति</button><a class="btn ghost" href="#/s/${id}/patha">पाठं पठतु</a></div>
       </div>`;
       $("#again").onclick = () => runSet(id, si, body);

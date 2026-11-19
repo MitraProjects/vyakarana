@@ -182,3 +182,67 @@ details > summary::-webkit-details-marker { display: none; }
 .to-words { margin: 0 0 6px; font-size: 15px; }
 table.words td:first-child { white-space: nowrap; }
 table.words .en-col { color: var(--yes); font-style: italic; }
+
+/* progress marks */
+.tick.part { color: #b7791f; }
+.read-box { margin: 28px 0 0; padding-top: 16px; border-top: 1px dashed var(--line); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.btn.read-on { background: var(--yes); }
+
+/* colours used in sūtra breakdowns */
+.c-green{color:#2E7D32}
+.c-blue{color:#1565C0}
+/* उत्तराणि groups */
+details.ans-group{border:1px solid var(--line,#e3d6c6);border-radius:10px;margin:12px 0;padding:6px 14px;background:#fffdf9}
+details.ans-group>summary{cursor:pointer;font-weight:700;color:#8B1A1A;padding:6px 0;font-size:1.1em}
+details.ans-group[open]>summary{border-bottom:1px solid #eee;margin-bottom:8px}
+
+/* ---------- सन्धि-क्रीडाङ्गणम् ---------- */
+.kr-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 10px;border-bottom:2px solid #eadfce;padding-bottom:8px}
+.kr-tab{border:1px solid #d9c9b3;background:#fff;border-radius:20px;padding:6px 14px;font:inherit;cursor:pointer;color:#5a3b1c}
+.kr-tab.on{background:#8B1A1A;color:#fff;border-color:#8B1A1A}
+.kr-body{min-height:200px}
+.kr-legend{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0 12px;font-size:.92em}
+.kr-legend span{padding:2px 10px;border-radius:12px;background:#faf6f0;font-weight:600}
+.kr-st{color:#C62828}.kr-ni{color:#2E7D32}.kr-ad{color:#1565C0}.kr-sa{color:#666}
+table.kr-chart td{vertical-align:top}
+.kr-pick{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.kr-chip{border:1px solid #d9c9b3;background:#fff;border-radius:16px;padding:4px 12px;font:inherit;cursor:pointer}
+.kr-chip.on{background:#fdf0e0;border-color:#8B1A1A;color:#8B1A1A;font-weight:600}
+.kr-machine,.kr-game{border:1px solid #eadfce;border-radius:12px;padding:16px;background:#fffdf9;margin-top:8px}
+.kr-sname{font-weight:700;color:#8B1A1A;margin-bottom:6px}
+.kr-dots{display:flex;gap:6px;margin:6px 0}
+.kr-dots span{width:24px;height:24px;border-radius:50%;background:#eee;display:inline-flex;align-items:center;justify-content:center;font-size:.8em}
+.kr-dots span.on{background:#8B1A1A;color:#fff}
+.kr-stepname{color:#5a3b1c;margin-bottom:8px}
+.kr-toks{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:1.6em;margin:10px 0;min-height:1.8em}
+.kr-tok{display:inline-block;padding:2px 10px;border-radius:8px;background:#f4efe7;border:2px solid transparent;transition:all .35s}
+button.kr-tok{font:inherit;cursor:pointer}
+button.kr-tok:disabled{cursor:default}
+.kr-plus{color:#999}
+.kr-st-b{border-color:#C62828;color:#C62828;background:#fdecec}
+.kr-ni-b{border-color:#2E7D32;color:#2E7D32;background:#eaf5ea}
+.kr-both{border-color:#C62828;color:#C62828;background:linear-gradient(#fdecec,#eaf5ea);box-shadow:0 0 0 2px #2E7D32}
+.kr-ad-b{border-color:#1565C0;color:#1565C0;background:#e8f0fb}
+.kr-sa-b{border-color:#888;color:#555;background:#f1f1f1}
+.kr-res{background:#8B1A1A;color:#fff}
+.kr-tags{margin:6px 0 10px}
+.kr-pair{font-size:1.3em;font-weight:700;margin:6px 0}
+.kr-opts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.kr-opt{border:1px solid #d9c9b3;background:#fff;border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
+.kr-opt:hover{border-color:#8B1A1A}
+.kr-grid{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.kr-grow{display:flex;flex-wrap:wrap;gap:6px}
+.kr-l{min-width:44px;padding:6px 8px;border-radius:8px;border:1px solid #e0d6c8;background:#fff;font:inherit;font-size:1.2em;cursor:pointer;color:#999}
+.kr-l.has{color:#8B1A1A;border-color:#d9a3a3;background:#fdf6f0;font-weight:600}
+.kr-l.on{outline:3px solid #8B1A1A}
+.kr-info{border:1px solid #eadfce;border-radius:10px;padding:10px 14px;margin:10px 0;background:#fffdf9}
+.kr-rule{margin:6px 0;font-size:1.05em}
+.kr-rule .kr-tok{font-size:1.1em}
+.kr-sut{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;font-size:1.25em}
+.kr-w{border:2px solid #d9c9b3;background:#fff;border-radius:10px;padding:4px 12px;font:inherit;cursor:pointer;display:inline-block}
+.kr-w.sel{border-color:#8B1A1A;background:#fdf0e0}
+.kr-bins{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}
+.kr-bin{border:2px dashed #d9c9b3;border-radius:10px;padding:8px;min-height:80px;cursor:pointer;background:#fffdf9}
+.kr-bin .kr-w{margin:4px 4px 0 0;font-size:1.05em}
+.kr-ok{border-color:#2E7D32;color:#2E7D32}
+.kr-bad{border-color:#C62828;color:#C62828}
