@@ -246,3 +246,11 @@ button.kr-tok:disabled{cursor:default}
 .kr-bin .kr-w{margin:4px 4px 0 0;font-size:1.05em}
 .kr-ok{border-color:#2E7D32;color:#2E7D32}
 .kr-bad{border-color:#C62828;color:#C62828}
+
+/* glossary tabs */
+.g-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 6px}
+.g-tab{border:1px solid #d9c9b3;background:#fff;border-radius:20px;padding:6px 14px;font:inherit;cursor:pointer;color:#5a3b1c}
+.g-tab.on{background:#8B1A1A;color:#fff;border-color:#8B1A1A}
+h3.g-sub{margin:22px 0 6px;font-size:1.05em}
+h3.g-sub a{color:#8B1A1A;text-decoration:none;border-bottom:1px dashed #c9a}
+h2.g-grp{margin:26px 0 4px;font-size:1.25em;color:#5a3b1c;border-bottom:2px solid #eadfce;padding-bottom:4px}

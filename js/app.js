@@ -245,32 +245,52 @@
 
   // main शब्दकोशः page: every section's words, grouped by पाठः, searchable
   function buildGlossary(body) {
-    const groups = [];
+    // one tab per part (module); inside, one heading per sub-module with its words
+    const parts = [];
     SITE.parts.forEach((p) => {
-      const rows = [];
+      const subs = [];
       ORDER.filter((id) => INFO[id].part === p).forEach((id) => {
-        (LESSONS[id] && LESSONS[id].words || []).forEach((w) => rows.push({ w, id }));
+        const words = (LESSONS[id] && LESSONS[id].words) || [];
+        if (words.length) subs.push({ id, words });
       });
-      if (rows.length) groups.push({ title: p.title, rows });
+      if (subs.length) parts.push({ title: p.title, subs });
     });
+    let cur = 0;
     const gbody = body.querySelector("#gbody");
+    gbody.insertAdjacentHTML("beforebegin", `<div class="g-tabs" id="gtabs">${parts.map((p, i) => `<button class="g-tab${i ? "" : " on"}" data-i="${i}">${md(p.title)}</button>`).join("")}</div>`);
+    const tabs = body.querySelectorAll(".g-tab");
+    const head = (id) => `<h3 class="g-sub"><a href="#/s/${id}/shabda">${label(INFO[id].path)} ${md(INFO[id].title)}</a></h3>`;
+    const table = (rows) => `<div class="tbl-wrap"><table class="words"><thead><tr><th>शब्दः</th><th>अर्थः</th><th>English</th></tr></thead><tbody>${
+      rows.map((w) => `<tr><td><b>${md(w[0])}</b></td><td>${md(w[1])}</td><td class="en-col">${md(w[2] || "")}</td></tr>`).join("")}</tbody></table></div>`;
     function draw(f) {
       f = (f || "").trim().toLowerCase();
-      gbody.innerHTML = groups.map((g) => {
-        const rows = g.rows.filter((r) => !f || r.w.join(" ").toLowerCase().includes(f));
-        if (!rows.length) return "";
-        return `<h2>${md(g.title)}</h2><div class="tbl-wrap"><table class="words"><thead><tr><th>शब्दः</th><th>अर्थः</th><th>English</th><th>विभागः</th></tr></thead><tbody>${
-          rows.map((r) => `<tr><td><b>${md(r.w[0])}</b></td><td>${md(r.w[1])}</td><td class="en-col">${md(r.w[2] || "")}</td><td><a href="#/s/${r.id}/patha">${label(INFO[r.id].path)} ${md(INFO[r.id].title)}</a></td></tr>`).join("")}</tbody></table></div>`;
+      if (!f) {   // tab view
+        tabs.forEach((t, i) => t.classList.toggle("on", i === cur));
+        let last = null;
+        gbody.innerHTML = parts[cur].subs.map((s) => {
+          const path = INFO[s.id].path, g = path.length > 1 ? path[0] : null;
+          const gh = g && g !== last ? `<h2 class="g-grp">${md((g.num ? g.num + " . " : "") + g.title)}</h2>` : "";
+          last = g || last;
+          return gh + head(s.id) + table(s.words);
+        }).join("");
+        return;
+      }
+      tabs.forEach((t) => t.classList.remove("on"));   // search view: all modules
+      gbody.innerHTML = parts.map((p) => {
+        const hits = p.subs.map((s) => ({ id: s.id, rows: s.words.filter((w) => w.join(" ").toLowerCase().includes(f)) })).filter((s) => s.rows.length);
+        return hits.length ? `<h2>${md(p.title)}</h2>` + hits.map((s) => head(s.id) + table(s.rows)).join("") : "";
       }).join("") || `<p class="muted">न प्राप्तम्।</p>`;
     }
+    const search = body.querySelector("#gsearch");
+    tabs.forEach((t) => t.onclick = () => { cur = +t.dataset.i; search.value = ""; draw(""); });
+    search.oninput = (e) => draw(e.target.value);
     draw("");
-    body.querySelector("#gsearch").oninput = (e) => draw(e.target.value);
   }
 
   // ---------------- abhyasa ----------------
   function abhyasaList(id, body) {
     const les = LESSONS[id];
-    let h = `<div class="ab-intro muted">अत्र अभ्यासाः सन्ति। प्रत्येकं अभ्यासं पुनः पुनः कर्तुं शक्नोति — प्रश्नाः प्रतिवारं नूतनक्रमेण आगच्छन्ति। प्रत्येकस्मिन् अभ्यासे ७०% अङ्काः प्राप्यन्ते चेत् ✓ भवति।</div><div class="ab-grid">`;
+    let h = `<div class="ab-intro muted">अत्र अभ्यासाः सन्ति। प्रत्येकं अभ्यासं पुनः पुनः कर्तुं शक्नोति — प्रश्नाः प्रतिवारं नूतनक्रमेण आगच्छन्ति।${MARKS ? " यदि प्रत्येकस्मिन् अभ्यासे ७०% अङ्काः प्राप्यन्ते , तर्हि ✓ भवति।" : ""}</div><div class="ab-grid">`;
     les.abhyasa.forEach((set, i) => {
       const best = store.best[id + ":" + i];
       const n = set.gana ? (set.gana.count || 10) : set.items.length;
