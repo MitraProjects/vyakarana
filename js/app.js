@@ -260,8 +260,8 @@
     gbody.insertAdjacentHTML("beforebegin", `<div class="g-tabs" id="gtabs">${parts.map((p, i) => `<button class="g-tab${i ? "" : " on"}" data-i="${i}">${md(p.title)}</button>`).join("")}</div>`);
     const tabs = body.querySelectorAll(".g-tab");
     const head = (id) => `<h3 class="g-sub"><a href="#/s/${id}/shabda">${label(INFO[id].path)} ${md(INFO[id].title)}</a></h3>`;
-    const table = (rows) => `<div class="tbl-wrap"><table class="words"><thead><tr><th>शब्दः</th><th>अर्थः</th><th>English</th></tr></thead><tbody>${
-      rows.map((w) => `<tr><td><b>${md(w[0])}</b></td><td>${md(w[1])}</td><td class="en-col">${md(w[2] || "")}</td></tr>`).join("")}</tbody></table></div>`;
+    const table = (rows, id) => `<div class="tbl-wrap"><table class="words"><thead><tr><th>शब्दः</th><th>अर्थः</th><th>English</th><th>विभागः</th></tr></thead><tbody>${
+      rows.map((w) => `<tr><td><b>${md(w[0])}</b></td><td>${md(w[1])}</td><td class="en-col">${md(w[2] || "")}</td><td><a href="#/s/${id}/shabda/${LESSONS[id].words.indexOf(w)}">${label(INFO[id].path)} ${md(INFO[id].title)}</a></td></tr>`).join("")}</tbody></table></div>`;
     function draw(f) {
       f = (f || "").trim().toLowerCase();
       if (!f) {   // tab view
@@ -271,14 +271,14 @@
           const path = INFO[s.id].path, g = path.length > 1 ? path[0] : null;
           const gh = g && g !== last ? `<h2 class="g-grp">${md((g.num ? g.num + " . " : "") + g.title)}</h2>` : "";
           last = g || last;
-          return gh + head(s.id) + table(s.words);
+          return gh + head(s.id) + table(s.words, s.id);
         }).join("");
         return;
       }
       tabs.forEach((t) => t.classList.remove("on"));   // search view: all modules
       gbody.innerHTML = parts.map((p) => {
         const hits = p.subs.map((s) => ({ id: s.id, rows: s.words.filter((w) => w.join(" ").toLowerCase().includes(f)) })).filter((s) => s.rows.length);
-        return hits.length ? `<h2>${md(p.title)}</h2>` + hits.map((s) => head(s.id) + table(s.rows)).join("") : "";
+        return hits.length ? `<h2>${md(p.title)}</h2>` + hits.map((s) => head(s.id) + table(s.rows, s.id)).join("") : "";
       }).join("") || `<p class="muted">न प्राप्तम्।</p>`;
     }
     const search = body.querySelector("#gsearch");
@@ -467,6 +467,11 @@
       sectionPage(parts[1], ["abhyasa", "patha", "shabda"].includes(parts[2]) ? parts[2] : null);
     } else { renderSidebar(""); home(); }
     window.scrollTo(0, 0);
+    // #/s/<id>/shabda/<n> — jump to word n in that lesson's शब्दकोशः and highlight it
+    if (parts[2] === "shabda" && parts[3] !== undefined) {
+      const tr = document.querySelectorAll("table.words tbody tr")[+parts[3]];
+      if (tr) { tr.classList.add("w-hit"); tr.scrollIntoView({ block: "center" }); }
+    }
   }
   $("#menuBtn").onclick = () => document.body.classList.toggle("nav-open");
   // clicking a link to the page you are already on (e.g. the अभ्यासशाला tab during a quiz) re-opens it
