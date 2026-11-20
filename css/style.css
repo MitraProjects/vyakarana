@@ -259,3 +259,14 @@ h2.g-grp{margin:26px 0 4px;font-size:1.25em;color:#5a3b1c;border-bottom:2px soli
 @keyframes wflash{0%{background:#ffe08a}100%{background:#fff4c8}}
 table.words tr.w-hit td{background:#fff4c8;animation:wflash 1.6s ease-out}
 table.words tr.w-hit td:first-child{box-shadow:inset 4px 0 0 #8B1A1A}
+
+/* visitor name box */
+.visitor-wrap{position:fixed;inset:0;background:rgba(40,20,10,.45);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
+.visitor-box{background:#fffdf9;border-radius:14px;padding:22px 22px 16px;max-width:380px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.visitor-title{font-size:1.4em;font-weight:700;color:#8B1A1A;margin-bottom:10px}
+.visitor-box label{display:block;margin-bottom:6px}
+.visitor-err{color:#C62828;font-size:.9em;margin-top:4px}
+.visitor-note{font-size:.85em;margin:8px 0 12px}
+.visitor-name{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:16px;padding:3px 12px;font:inherit;font-size:.9em;cursor:pointer}
+.visitor-name{white-space:nowrap;max-width:42vw;overflow:hidden;text-overflow:ellipsis;flex:none}
+@media (max-width:520px){.brand-sub{display:none}}
