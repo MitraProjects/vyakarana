@@ -101,6 +101,10 @@
     nodes.forEach((n) => {
       const p2 = path.concat([n]);
       const lab = label(p2);
+      if (n.cap) {
+        h += `<div class="nav-cap" style="padding-left:${12 + depth * 16}px">${md(n.title)}</div>` + navNodes(n.children, current, p2, depth);
+        return;
+      }
       if (n.children) {
         const key = "g:" + p2.map((x) => x.num + x.title).join("/");
         const open = isOpen(key, containsId(n, current), false);
@@ -163,7 +167,9 @@
       let out = "";
       nodes.forEach((n) => {
         const p2 = path.concat([n]);
-        if (n.children) {
+        if (n.cap) {
+          out += `</div><div class="grp-cap" style="margin-left:${(p2.length - 1) * 14}px">${md(n.title)}</div><div class="sec-grid">` + homeNodes(n.children, p2) + `</div><div class="sec-grid">`;
+        } else if (n.children) {
           out += `</div><div class="grp-title" style="margin-left:${(p2.length - 1) * 14}px"><span class="num">${label(p2)}</span>${md(n.title)}</div><div class="sec-grid">` + homeNodes(n.children, p2) + `</div><div class="sec-grid">`;
         } else {
           out += `<a class="sec-card ${sectionDone(n.id) ? "done" : ""}" href="#/s/${n.id}"><span class="num">${label(p2)}</span><span class="t">${md(n.title)}</span>${mark(n.id)}</a>`;

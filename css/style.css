@@ -270,3 +270,8 @@ table.words tr.w-hit td:first-child{box-shadow:inset 4px 0 0 #8B1A1A}
 .visitor-name{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:16px;padding:3px 12px;font:inherit;font-size:.9em;cursor:pointer}
 .visitor-name{white-space:nowrap;max-width:42vw;overflow:hidden;text-overflow:ellipsis;flex:none}
 @media (max-width:520px){.brand-sub{display:none}}
+
+/* lesson-group captions (पाठः / परिशिष्टानि) */
+.nav-cap { font-size: 12px; font-weight: 700; letter-spacing: .02em; color: var(--accent); opacity: .8; margin: 8px 0 2px; border-bottom: 1px dashed var(--accent-soft); padding-bottom: 2px; }
+.grp-cap { margin: 10px 0 2px; font-size: 13px; font-weight: 700; color: var(--accent); opacity: .8; }
+figure.chart { margin: 16px 0; text-align: center; }
