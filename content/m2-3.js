@@ -3414,7 +3414,7 @@ L("m2-3jh", (function(){ const X = {
     const art = body.querySelector("article.lesson");
     art.insertAdjacentHTML("beforeend", `<div class="g-tabs pdf-tabs">${X.tabs.map((t,i)=>`<button class="g-tab${i?"":" on"}" data-i="${i}">${h.md(t.t)}</button>`).join("")}</div><div id="pdfTab"></div>`);
     const box = art.querySelector("#pdfTab");
-    const show = (i) => { box.innerHTML = h.renderBlocks(X.tabs[i].blocks); art.querySelectorAll(".pdf-tabs .g-tab").forEach((b)=>b.classList.toggle("on", +b.dataset.i===i)); };
+    const show = (i) => { box.innerHTML = h.renderBlocks(X.tabs[i].blocks) + (i < X.tabs.length-1 ? `<div style="text-align:right;margin:16px 0"><button class="btn nxt">अग्रे — ${X.tabs[i+1].t} ›</button></div>` : ""); art.querySelectorAll(".pdf-tabs .g-tab").forEach((b)=>b.classList.toggle("on", +b.dataset.i===i)); const n = box.querySelector(".nxt"); if (n) n.onclick = () => { show(i+1); art.querySelector(".pdf-tabs").scrollIntoView(); }; };
     art.querySelectorAll(".pdf-tabs .g-tab").forEach((b)=>{ b.onclick = () => { show(+b.dataset.i); art.querySelector(".pdf-tabs").scrollIntoView({block:"nearest"}); }; });
     show(0);
   };
